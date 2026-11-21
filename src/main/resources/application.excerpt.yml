@@ -1,0 +1,25 @@
+# application.yml 발췌 — LLM 호출의 재시도·타임아웃과 프로바이더별 서킷브레이커 설정
+# (재시도·폴백 정책 정리 #1292에서 정리한 부분)
+spring:
+  ai:
+    retry:
+      max-attempts: 1 # LLM 재시도는 프로바이더 @Retryable 한 층에서만 — Spring AI 안쪽 재시도 비활성
+  http:
+    client: # 자동 구성 RestClient.Builder에 적용 — 세 ChatModel(gpt-4o-mini·gpt-5·Gemini)의 HTTP 타임아웃
+      connect-timeout: 5s
+      read-timeout: 60s
+
+resilience4j:
+  circuitbreaker:
+    instances:
+      open-ai:
+        ignore-exceptions:
+          - com.loopone.loopinbe.global.exception.OpenAiRateLimitException
+          - com.loopone.loopinbe.global.exception.AiResponseParseException
+      gpt-5:
+        ignore-exceptions:
+          - com.loopone.loopinbe.global.exception.OpenAiRateLimitException
+          - com.loopone.loopinbe.global.exception.AiResponseParseException
+      gemini:
+        ignore-exceptions:
+          - com.loopone.loopinbe.global.exception.AiResponseParseException

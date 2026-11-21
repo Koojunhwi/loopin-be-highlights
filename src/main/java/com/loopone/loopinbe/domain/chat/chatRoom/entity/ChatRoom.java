@@ -1,0 +1,68 @@
+package com.loopone.loopinbe.domain.chat.chatRoom.entity;
+
+import com.loopone.loopinbe.domain.account.member.entity.Member;
+import com.loopone.loopinbe.domain.chat.chatRoom.enums.ChatRoomStatus;
+import com.loopone.loopinbe.domain.loop.loop.entity.Loop;
+import com.loopone.loopinbe.global.persistence.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+import lombok.experimental.SuperBuilder;
+import org.hibernate.annotations.SQLDelete;
+import org.hibernate.annotations.SQLRestriction;
+
+import java.time.Instant;
+import java.util.ArrayList;
+import java.util.List;
+
+@Entity
+@SQLDelete(sql = "UPDATE chat_room SET deleted_at = CURRENT_TIMESTAMP WHERE id = ?")
+@SQLRestriction("deleted_at IS NULL")
+@Setter
+@Getter
+@AllArgsConstructor
+@NoArgsConstructor
+@SuperBuilder
+public class ChatRoom extends BaseEntity {
+    public static final Long ROOM_MEMBER_LIMIT = 100L;
+
+    @Column(length = 20)
+    private String title;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "member_id", nullable = false)
+    private Member member;
+
+    @OneToMany(mappedBy = "chatRoom", cascade = CascadeType.ALL)
+    private List<ChatRoomMember> chatRoomMembers = new ArrayList<>();
+
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "loop_id")
+    private Loop loop;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean isBotRoom = true;
+
+    @Column(nullable = false)
+    @Enumerated(EnumType.STRING)
+    @Builder.Default
+    private ChatRoomStatus chatRoomStatus = ChatRoomStatus.DEFAULT;
+
+    private Long teamId;
+
+    private String noticeMessageContent;
+
+    private Instant lastMessageAt;
+
+    public void selectLoop(Loop loop) {
+        this.loop = loop;
+    }
+
+    public void updateTitle(String title) {
+        this.title = title;
+    }
+
+    public void updateChatRoomStatus(ChatRoomStatus chatRoomStatus) {
+        this.chatRoomStatus = chatRoomStatus;
+    }
+}

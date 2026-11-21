@@ -1,0 +1,53 @@
+package com.loopone.loopinbe.global.initData.notProd.service;
+
+import com.loopone.loopinbe.global.initData.loop.service.NotProdLoopService;
+import com.loopone.loopinbe.global.initData.member.service.NotProdMemberService;
+import com.loopone.loopinbe.global.initData.team.service.NotProdTeamService;
+import com.loopone.loopinbe.global.initData.teamLoop.service.NotProdTeamLoopService;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+
+import java.util.ArrayList;
+import java.util.List;
+
+@Slf4j
+@Service
+@RequiredArgsConstructor
+public class NotProdService {
+    private final NotProdMemberService notProdMemberService;
+    private final NotProdLoopService notProdLoopService;
+    private final NotProdTeamService notProdTeamService;
+    private final NotProdTeamLoopService notProdTeamLoopService;
+    private final List<String> memberEmails = new ArrayList<>();
+
+    // 1) 가데이터 생성 메서드
+    public void initDummyDataTransactional() {
+        notProdMemberService.createMembers(memberEmails);
+        notProdLoopService.createMonthLoops(1, 1);
+        NotProdTeamService.SeedTeamsResult seedTeamsResult= notProdTeamService.createTeams();
+        notProdTeamLoopService.createTeamLoops(seedTeamsResult.team1Id(), seedTeamsResult.team2Id());
+    }
+
+    // 성능 테스트용 가데이터 생성 메서드
+    public void initTestDataTransactional(int vu) {
+        notProdMemberService.createTestMembers(memberEmails, vu);
+        notProdLoopService.createMonthLoops(1, vu);
+        NotProdTeamService.SeedTestTeamsResult seedTestTeamsResult = notProdTeamService.createTestTeams(vu);
+        notProdTeamLoopService.createTestTeamLoops(seedTestTeamsResult.teamIds(), vu);
+    }
+
+    // 2) 가데이터 정보 출력
+    public void initDummyData() {
+        long start = System.currentTimeMillis();
+        // 둘 중 하나만 활성화 - 유저 중복 생성으로 앱 종료됨
+        initDummyDataTransactional();   // 일반 가데이터
+//        initTestDataTransactional(220);  // 성능 테스트용 가데이터
+        long end = System.currentTimeMillis();
+        long executionTimeMillis = end - start;
+        NotProdPrintService.printTestAccounts(
+                memberEmails,
+                executionTimeMillis
+        );
+    }
+}
